@@ -6,6 +6,7 @@ theme: jekyll-theme-cayman
 plugins:
   - jekyll-jupyter-notebook
 baseurl: ""
+include: [src/]
 url: "https://praykar.github.io/newsclassifier"
 author:
   name: "Prakhar Kulshrestha"
