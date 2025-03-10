@@ -1,11 +1,10 @@
 theme: minima
 title: My Project Page
-description: A showcase of my final year project work
+description: A showcase of Business Case project work
 baseurl: ""
-url: "https://yourusername.github.io/my-project-page"
+url: "https://praykar.github.io/newsclassifier"
 author:
-  name: "Your Name"
-  email: "your.email@example.com"
+  name: "Prakhar Kulshrestha"
+  email: "praykar@live.com"
 social:
-  twitter: "your_twitter_handle"
-  github: "your_github_username"
+  github: "praykar"
