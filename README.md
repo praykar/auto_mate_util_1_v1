@@ -1,25 +1,24 @@
 # README.md
 
-# My Project Page
+# News Classification Project
 
-This project showcases my final year project work. It includes various sections detailing the abstract, methodology, results, and conclusion of the project.
+This project implements a news article classification system using machine learning and deep learning approaches. 
 
 ## Project Structure
+- `src/notebooks/`: Contains Jupyter notebooks with analysis
+- `src/pages/`: Project documentation and results
+- `src/assets/`: CSS styles and other assets
 
-- **src/assets/css/styles.css**: Contains the styles for the project.
-- **src/pages/index.html**: The main entry point for the project.
-- **src/pages/sections/abstract.html**: Summarizes the key points and objectives of the project.
-- **src/pages/sections/methodology.html**: Details the methodology used in the project.
-- **src/pages/sections/results.html**: Showcases the results obtained from the project.
-- **src/pages/sections/conclusion.html**: Provides the conclusion of the project.
-- **src/js/main.js**: Contains scripts for interactivity on the web pages.
-- **_config.yml**: Configuration file for the GitHub Pages site.
-- **package.json**: Configuration file for npm dependencies and scripts.
+## Key Features
+- Multiple ML models (Naive Bayes, Random Forest, KNN)
+- Deep Learning approaches with word embeddings
+- Comprehensive evaluation metrics
+
+## Results
+Best performing model: Naive Bayes with 94.6% accuracy
 
 ## Usage
-
-To view the project, you can open the `index.html` file in a web browser. This will allow you to navigate through the different sections of the project.
-
+View the project site at: https://praykar.github.io/newsclassifier
 ## License
 
 This project is licensed under the MIT License.
