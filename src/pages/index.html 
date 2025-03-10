@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Project Page</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>My Final Year Project</h1>
+        <nav>
+            <ul>
+                <li><a href="sections/abstract.html">Abstract</a></li>
+                <li><a href="sections/methodology.html">Methodology</a></li>
+                <li><a href="sections/results.html">Results</a></li>
+                <li><a href="sections/conclusion.html">Conclusion</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>Welcome to My Project Page</h2>
+        <p>This page serves as a showcase for my final year project. Use the navigation above to explore different sections of the project.</p>
+    </main>
+    <footer>
+        <p>&copy; 2023 My Final Year Project</p>
+    </footer>
+    <script src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+theme: minima
+title: My Project Page
+description: A showcase of my final year project work
+baseurl: ""
+url: "https://yourusername.github.io/my-project-page"
+author:
+  name: "Your Name"
+  email: "your.email@example.com"
+social:
+  twitter: "your_twitter_handle"
+  github: "your_github_username"
