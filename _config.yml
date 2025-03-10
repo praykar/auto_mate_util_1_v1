@@ -1,6 +1,10 @@
-theme: minima
-title: My Project Page
-description: A showcase of Business Case project work
+title: News Classification Project
+description: A machine learning project for news article classification
+theme: jekyll-theme-cayman
+
+# Add notebook display support
+plugins:
+  - jekyll-jupyter-notebook
 baseurl: ""
 url: "https://praykar.github.io/newsclassifier"
 author:
