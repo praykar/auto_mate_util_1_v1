@@ -1,7 +1,7 @@
 title: News Classification Project
 description: A machine learning project for news article classification
 theme: jekyll-theme-cayman
-
+source: src
 # Add notebook display support
 plugins:
   - jekyll-jupyter-notebook
