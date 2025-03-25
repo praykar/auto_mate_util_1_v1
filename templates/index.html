@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ML Notebook Visualization Platform</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            line-height: 1.6; 
+        }
+        .notebook-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .notebook-item {
+            background: #f4f4f4;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ML Notebook Visualization Platform</h1>
+    <p>Browse through our collection of machine learning notebooks</p>
+    
+    <ul class="notebook-list">
+        {% for notebook in notebooks %}
+        <li class="notebook-item">
+            <h3>{{ notebook.name }}</h3>
+            <p>ML Type: {{ notebook.ml_type }}</p>
+            <p>Total Cells: {{ notebook.cells }}</p>
+            <a href="{{ notebook.name.replace('.ipynb', '') }}.html">View Notebook</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
