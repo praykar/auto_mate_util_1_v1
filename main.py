@@ -258,7 +258,7 @@ def main():
     # Configuration (would typically come from environment variables)
     HF_API_TOKEN = os.getenv('HF_API_TOKEN')
     GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
-    GITHUB_REPO = 'username/ml-notebook-platform'
+    GITHUB_REPO = 'praykar/autonotebook'
     
     notebook_processor = NotebookProcessor(HF_API_TOKEN)
     github_deployer = GitHubDeployer(GITHUB_TOKEN, GITHUB_REPO)
