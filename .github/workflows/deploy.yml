@@ -51,7 +51,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v2
 
-name: Deploy Notebooks
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -79,25 +79,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+          
       - name: Process and Build
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python main.py
+          mkdir -p _site
+          cp -r uploaded_notebooks/* _site/
           
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v2
         with:
-          name: notebook-pages
-          path: uploaded_notebooks/*.html
-          if-no-files-found: warn
+          path: _site
           
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        id: deployment
+        uses: actions/deploy-pages@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./uploaded_notebooks
-          enable_jekyll: false
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
+          token: ${{ secrets.GITHUB_TOKEN }}
