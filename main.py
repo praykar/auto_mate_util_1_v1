@@ -188,6 +188,9 @@ class GitHubDeployer:
         self.g = github.Github(github_token)
         self.repo_name = repo_name
         self.repo = self.g.get_repo(repo_name)
+        self.upload_dir = 'uploaded_notebooks'
+        os.makedirs(self.upload_dir, exist_ok=True)
+        self._create_index_html()  # Always create/update index.html
         self._ensure_gh_pages_branch()
 
     def _ensure_gh_pages_branch(self):
@@ -202,7 +205,7 @@ class GitHubDeployer:
             self._create_index_html()
 
     def _create_index_html(self):
-        """Create initial index.html in gh-pages"""
+        """Create index.html in the upload directory"""
         index_content = """
         <!DOCTYPE html>
         <html>
@@ -273,12 +276,9 @@ class GitHubDeployer:
             </body>
         </html>
         """
-        self.repo.create_file(
-            path="index.html",
-            message="Initial gh-pages setup",
-            content=index_content,
-            branch="gh-pages"
-        )
+        index_path = os.path.join(self.upload_dir, 'index.html')
+        with open(index_path, 'w', encoding='utf-8') as f:
+            f.write(index_content)
 
     def deploy_content(self, content, notebook_name):
         """
@@ -287,27 +287,9 @@ class GitHubDeployer:
         :param content: HTML content to deploy
         :param notebook_name: Name of the source notebook
         """
-        file_path = notebook_name.replace(".ipynb", ".html")
-        commit_message = f'Update generated page for {notebook_name}'
-        
-        try:
-            # Try to get existing file
-            file = self.repo.get_contents(file_path, ref="gh-pages")
-            self.repo.update_file(
-                path=file_path,
-                message=commit_message,
-                content=content,
-                sha=file.sha,
-                branch="gh-pages"
-            )
-        except github.GithubException:
-            # File doesn't exist, create new one
-            self.repo.create_file(
-                path=file_path,
-                message=commit_message,
-                content=content,
-                branch="gh-pages"
-            )
+        file_path = os.path.join(self.upload_dir, notebook_name.replace(".ipynb", ".html"))
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
 
 def create_flask_app(notebook_processor, github_deployer):
     """
