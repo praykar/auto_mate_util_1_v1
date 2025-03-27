@@ -11,16 +11,13 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.1
       
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v4.7.1
         with:
           python-version: '3.x'
           
@@ -29,9 +26,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-          
       - name: Process and Build
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
@@ -39,12 +33,18 @@ jobs:
         run: |
           python main.py
           mkdir -p _site
-          # First copy index.html
-          cp uploaded_notebooks/index.html _site/index.html || echo "No index.html found"
-          # Then copy all generated notebook HTML files
-          cp uploaded_notebooks/*.html _site/ 2>/dev/null || echo "No notebook HTMLs found"
+          cp -r uploaded_notebooks/* _site/ || echo "No files to copy"
           
-      - name: Upload Pages artifact
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3.1.3
+        with:
+          name: github-pages
+          path: _site
+          if-no-files-found: error
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
         uses: actions/upload-pages-artifact@v2
         with:
           path: _site
