@@ -39,10 +39,10 @@ jobs:
         run: |
           python main.py
           mkdir -p _site
-          # Copy index.html first
-          cp uploaded_notebooks/index.html _site/ || echo "No index.html found"
-          # Then copy all other HTML files
-          cp uploaded_notebooks/*.html _site/ || echo "No notebook HTMLs found"
+          # First copy index.html
+          cp uploaded_notebooks/index.html _site/index.html || echo "No index.html found"
+          # Then copy all generated notebook HTML files
+          cp uploaded_notebooks/*.html _site/ 2>/dev/null || echo "No notebook HTMLs found"
           
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v2
