@@ -188,22 +188,126 @@ class GitHubDeployer:
         self.g = github.Github(github_token)
         self.repo_name = repo_name
         self.repo = self.g.get_repo(repo_name)
+        self._ensure_gh_pages_branch()
+
+    def _ensure_gh_pages_branch(self):
+        """Create gh-pages branch if it doesn't exist"""
+        try:
+            self.repo.get_branch("gh-pages")
+        except github.GithubException:
+            # Create gh-pages branch
+            master = self.repo.get_branch("main")
+            self.repo.create_git_ref(ref="refs/heads/gh-pages", sha=master.commit.sha)
+            # Create initial index.html
+            self._create_index_html()
+
+    def _create_index_html(self):
+        """Create initial index.html in gh-pages"""
+        index_content = """
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Auto Notebook Visualizations</title>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+                    .container { max-width: 1200px; margin: 0 auto; }
+                    .header { background: #f4f4f4; padding: 20px; border-radius: 5px; }
+                    .notebook-list { list-style: none; padding: 0; }
+                    .notebook-list li { margin: 10px 0; }
+                    .notebook-list a { 
+                        text-decoration: none;
+                        color: #0366d6;
+                        padding: 10px;
+                        display: block;
+                        background: #f8f9fa;
+                        border-radius: 4px;
+                    }
+                    .notebook-list a:hover { background: #e9ecef; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>ML Notebook Visualizations</h1>
+                        <p>Generated visualizations of Machine Learning notebooks</p>
+                    </div>
+                    <ul class="notebook-list" id="notebook-list"></ul>
+                </div>
+                <script>
+                    async function loadNotebooks() {
+                        const pathParts = window.location.pathname.split('/');
+                        const username = pathParts[1];
+                        const repoName = pathParts[2];
+                        const apiUrl = `https://api.github.com/repos/${username}/${repoName}/contents?ref=gh-pages`;
+                        
+                        try {
+                            const response = await fetch(apiUrl);
+                            const files = await response.json();
+                            const notebooks = files.filter(f => f.name.endsWith('.html') && f.name !== 'index.html');
+                            
+                            const list = document.getElementById('notebook-list');
+                            if (notebooks.length === 0) {
+                                list.innerHTML = '<li>No notebooks available yet</li>';
+                                return;
+                            }
+                            
+                            notebooks.forEach(nb => {
+                                const li = document.createElement('li');
+                                const a = document.createElement('a');
+                                a.href = nb.name;
+                                a.textContent = nb.name.replace('.html', '');
+                                li.appendChild(a);
+                                list.appendChild(li);
+                            });
+                        } catch (error) {
+                            console.error('Error loading notebooks:', error);
+                            document.getElementById('notebook-list').innerHTML = 
+                                '<li>Error loading notebooks. Please try again later.</li>';
+                        }
+                    }
+                    
+                    loadNotebooks();
+                </script>
+            </body>
+        </html>
+        """
+        self.repo.create_file(
+            path="index.html",
+            message="Initial gh-pages setup",
+            content=index_content,
+            branch="gh-pages"
+        )
 
     def deploy_content(self, content, notebook_name):
         """
         Deploy generated content to GitHub Pages
         
-        :param content: Generated web page content
+        :param content: HTML content to deploy
         :param notebook_name: Name of the source notebook
         """
-        file_path = f'docs/{notebook_name.replace(".ipynb", ".html")}'
-        commit_message = f'Add generated page for {notebook_name}'
+        file_path = notebook_name.replace(".ipynb", ".html")
+        commit_message = f'Update generated page for {notebook_name}'
         
-        self.repo.create_file(
-            path=file_path, 
-            message=commit_message, 
-            content=content
-        )
+        try:
+            # Try to get existing file
+            file = self.repo.get_contents(file_path, ref="gh-pages")
+            self.repo.update_file(
+                path=file_path,
+                message=commit_message,
+                content=content,
+                sha=file.sha,
+                branch="gh-pages"
+            )
+        except github.GithubException:
+            # File doesn't exist, create new one
+            self.repo.create_file(
+                path=file_path,
+                message=commit_message,
+                content=content,
+                branch="gh-pages"
+            )
 
 def create_flask_app(notebook_processor, github_deployer):
     """
@@ -262,6 +366,7 @@ def main():
     
     notebook_processor = NotebookProcessor(HF_API_TOKEN)
     github_deployer = GitHubDeployer(GITHUB_TOKEN, GITHUB_REPO)
+    # Enable GitHub Pages in the repository settings if not already enabled
     
     app = create_flask_app(notebook_processor, github_deployer)
     app.run(debug=True)
