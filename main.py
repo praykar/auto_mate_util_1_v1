@@ -294,9 +294,57 @@ class GitHubDeployer:
         :param content: HTML content to deploy
         :param notebook_name: Name of the source notebook
         """
+        # First save locally
         file_path = os.path.join(self.upload_dir, notebook_name.replace(".ipynb", ".html"))
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
+            
+        # Then push to gh-pages branch
+        try:
+            # Convert local path to repo path
+            repo_path = file_path.replace('\\', '/')
+            # Try to update existing file
+            try:
+                file = self.repo.get_contents(repo_path, ref="gh-pages")
+                self.repo.update_file(
+                    path=repo_path,
+                    message=f"Update {notebook_name} visualization",
+                    content=content,
+                    sha=file.sha,
+                    branch="gh-pages"
+                )
+            except github.GithubException:
+                # File doesn't exist, create new one
+                self.repo.create_file(
+                    path=repo_path,
+                    message=f"Add {notebook_name} visualization",
+                    content=content,
+                    branch="gh-pages"
+                )
+                
+            # Always update index.html
+            index_path = os.path.join(self.upload_dir, 'index.html')
+            with open(index_path, 'r', encoding='utf-8') as f:
+                index_content = f.read()
+            try:
+                index_file = self.repo.get_contents("index.html", ref="gh-pages")
+                self.repo.update_file(
+                    path="index.html",
+                    message="Update index.html",
+                    content=index_content,
+                    sha=index_file.sha,
+                    branch="gh-pages"
+                )
+            except github.GithubException:
+                self.repo.create_file(
+                    path="index.html",
+                    message="Create index.html",
+                    content=index_content,
+                    branch="gh-pages"
+                )
+        except Exception as e:
+            print(f"Error pushing to gh-pages: {e}")
+            raise
 
 def create_flask_app(notebook_processor, github_deployer):
     """
