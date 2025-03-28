@@ -188,6 +188,11 @@ class GitHubDeployer:
         self.g = github.Github(github_token)
         self.repo_name = repo_name
         self.repo = self.g.get_repo(repo_name)
+        self.upload_dir = 'uploaded_notebooks'
+        self.template_dir = 'templates'
+        os.makedirs(self.upload_dir, exist_ok=True)
+        os.makedirs(self.template_dir, exist_ok=True)
+        self._create_index_html()  # Always create/update index.html
         self._ensure_gh_pages_branch()
 
     def _ensure_gh_pages_branch(self):
@@ -202,83 +207,85 @@ class GitHubDeployer:
             self._create_index_html()
 
     def _create_index_html(self):
-        """Create initial index.html in gh-pages"""
-        index_content = """
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <title>Auto Notebook Visualizations</title>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
-                    .container { max-width: 1200px; margin: 0 auto; }
-                    .header { background: #f4f4f4; padding: 20px; border-radius: 5px; }
-                    .notebook-list { list-style: none; padding: 0; }
-                    .notebook-list li { margin: 10px 0; }
-                    .notebook-list a { 
-                        text-decoration: none;
-                        color: #0366d6;
-                        padding: 10px;
-                        display: block;
-                        background: #f8f9fa;
-                        border-radius: 4px;
-                    }
-                    .notebook-list a:hover { background: #e9ecef; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>ML Notebook Visualizations</h1>
-                        <p>Generated visualizations of Machine Learning notebooks</p>
-                    </div>
-                    <ul class="notebook-list" id="notebook-list"></ul>
-                </div>
-                <script>
-                    async function loadNotebooks() {
-                        const pathParts = window.location.pathname.split('/');
-                        const username = pathParts[1];
-                        const repoName = pathParts[2];
-                        const apiUrl = `https://api.github.com/repos/${username}/${repoName}/contents?ref=gh-pages`;
-                        
-                        try {
-                            const response = await fetch(apiUrl);
-                            const files = await response.json();
-                            const notebooks = files.filter(f => f.name.endsWith('.html') && f.name !== 'index.html');
-                            
-                            const list = document.getElementById('notebook-list');
-                            if (notebooks.length === 0) {
-                                list.innerHTML = '<li>No notebooks available yet</li>';
-                                return;
+        """Create index.html in the upload directory"""
+        # First create in templates if not exists
+        template_path = os.path.join(self.template_dir, 'index.html')
+        if not os.path.exists(template_path):
+            with open(template_path, 'w', encoding='utf-8') as f:
+                f.write("""<!DOCTYPE html>
+                <html>
+                    <head>
+                        <title>Auto Notebook Visualizations</title>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <style>
+                            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+                            .container { max-width: 1200px; margin: 0 auto; }
+                            .header { background: #f4f4f4; padding: 20px; border-radius: 5px; }
+                            .notebook-list { list-style: none; padding: 0; }
+                            .notebook-list li { margin: 10px 0; }
+                            .notebook-list a { 
+                                text-decoration: none;
+                                color: #0366d6;
+                                padding: 10px;
+                                display: block;
+                                background: #f8f9fa;
+                                border-radius: 4px;
+                            }
+                            .notebook-list a:hover { background: #e9ecef; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1>ML Notebook Visualizations</h1>
+                                <p>Generated visualizations of Machine Learning notebooks</p>
+                            </div>
+                            <ul class="notebook-list" id="notebook-list"></ul>
+                        </div>
+                        <script>
+                            async function loadNotebooks() {
+                                const pathParts = window.location.pathname.split('/');
+                                const username = pathParts[1];
+                                const repoName = pathParts[2];
+                                const apiUrl = `https://api.github.com/repos/${username}/${repoName}/contents?ref=gh-pages`;
+                                
+                                try {
+                                    const response = await fetch(apiUrl);
+                                    const files = await response.json();
+                                    const notebooks = files.filter(f => f.name.endsWith('.html') && f.name !== 'index.html');
+                                    
+                                    const list = document.getElementById('notebook-list');
+                                    if (notebooks.length === 0) {
+                                        list.innerHTML = '<li>No notebooks available yet</li>';
+                                        return;
+                                    }
+                                    
+                                    notebooks.forEach(nb => {
+                                        const li = document.createElement('li');
+                                        const a = document.createElement('a');
+                                        a.href = nb.name;
+                                        a.textContent = nb.name.replace('.html', '');
+                                        li.appendChild(a);
+                                        list.appendChild(li);
+                                    });
+                                } catch (error) {
+                                    console.error('Error loading notebooks:', error);
+                                    document.getElementById('notebook-list').innerHTML = 
+                                        '<li>Error loading notebooks. Please try again later.</li>';
+                                }
                             }
                             
-                            notebooks.forEach(nb => {
-                                const li = document.createElement('li');
-                                const a = document.createElement('a');
-                                a.href = nb.name;
-                                a.textContent = nb.name.replace('.html', '');
-                                li.appendChild(a);
-                                list.appendChild(li);
-                            });
-                        } catch (error) {
-                            console.error('Error loading notebooks:', error);
-                            document.getElementById('notebook-list').innerHTML = 
-                                '<li>Error loading notebooks. Please try again later.</li>';
-                        }
-                    }
-                    
-                    loadNotebooks();
-                </script>
-            </body>
-        </html>
-        """
-        self.repo.create_file(
-            path="index.html",
-            message="Initial gh-pages setup",
-            content=index_content,
-            branch="gh-pages"
-        )
+                            loadNotebooks();
+                        </script>
+                    </body>
+                </html>""")
+        
+        # Copy from templates to upload directory
+        index_path = os.path.join(self.upload_dir, 'index.html')
+        with open(template_path, 'r', encoding='utf-8') as src:
+            with open(index_path, 'w', encoding='utf-8') as dst:
+                dst.write(src.read())
 
     def deploy_content(self, content, notebook_name):
         """
@@ -287,27 +294,57 @@ class GitHubDeployer:
         :param content: HTML content to deploy
         :param notebook_name: Name of the source notebook
         """
-        file_path = notebook_name.replace(".ipynb", ".html")
-        commit_message = f'Update generated page for {notebook_name}'
-        
+        # First save locally
+        file_path = os.path.join(self.upload_dir, notebook_name.replace(".ipynb", ".html"))
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+            
+        # Then push to gh-pages branch
         try:
-            # Try to get existing file
-            file = self.repo.get_contents(file_path, ref="gh-pages")
-            self.repo.update_file(
-                path=file_path,
-                message=commit_message,
-                content=content,
-                sha=file.sha,
-                branch="gh-pages"
-            )
-        except github.GithubException:
-            # File doesn't exist, create new one
-            self.repo.create_file(
-                path=file_path,
-                message=commit_message,
-                content=content,
-                branch="gh-pages"
-            )
+            # Convert local path to repo path
+            repo_path = file_path.replace('\\', '/')
+            # Try to update existing file
+            try:
+                file = self.repo.get_contents(repo_path, ref="gh-pages")
+                self.repo.update_file(
+                    path=repo_path,
+                    message=f"Update {notebook_name} visualization",
+                    content=content,
+                    sha=file.sha,
+                    branch="gh-pages"
+                )
+            except github.GithubException:
+                # File doesn't exist, create new one
+                self.repo.create_file(
+                    path=repo_path,
+                    message=f"Add {notebook_name} visualization",
+                    content=content,
+                    branch="gh-pages"
+                )
+                
+            # Always update index.html
+            index_path = os.path.join(self.upload_dir, 'index.html')
+            with open(index_path, 'r', encoding='utf-8') as f:
+                index_content = f.read()
+            try:
+                index_file = self.repo.get_contents("index.html", ref="gh-pages")
+                self.repo.update_file(
+                    path="index.html",
+                    message="Update index.html",
+                    content=index_content,
+                    sha=index_file.sha,
+                    branch="gh-pages"
+                )
+            except github.GithubException:
+                self.repo.create_file(
+                    path="index.html",
+                    message="Create index.html",
+                    content=index_content,
+                    branch="gh-pages"
+                )
+        except Exception as e:
+            print(f"Error pushing to gh-pages: {e}")
+            raise
 
 def create_flask_app(notebook_processor, github_deployer):
     """

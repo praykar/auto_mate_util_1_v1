@@ -1,0 +1,5 @@
+flask
+nbformat
+requests
+PyGithub
+werkzeug
